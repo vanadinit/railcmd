@@ -1,8 +1,8 @@
 import socket
 import string
 
+from .base import expect, log
 from .exceptions import SrcpError, ProtocolError
-from .logger import log
 
 
 class SrcpConnection:
@@ -77,11 +77,6 @@ class SrcpConnection:
         log.debug(f'got: {response.rstrip()}')
         return response
 
-    @staticmethod
-    def expect(a, b):
-        if a != b:
-            raise ProtocolError(f'{b} expected, {a} received')
-
     def set_power(self, p: int = 1, bus: int = 1, socket_index: int = 0):
         """Enable/disable power on the tracks"""
         if p:
@@ -94,9 +89,9 @@ class SrcpConnection:
         response = self.sendget(f'GET {bus} POWER', socket_index).split()
         if len(response) < 6:
             raise ProtocolError(f'{response} not expected')
-        self.expect(response[2], "INFO")
-        self.expect(int(response[3]), bus)
-        self.expect(response[4], "POWER")
+        expect(response[2], "INFO")
+        expect(int(response[3]), bus)
+        expect(response[4], "POWER")
         if response[5] == "ON":
             return 1
         if response[5] == "OFF":
@@ -109,10 +104,10 @@ class SrcpConnection:
             return 0
         if len(response) != 7:
             raise ProtocolError(f'{response} not expected')
-        self.expect(response[2], "INFO")
-        self.expect(int(response[3]), bus)
-        self.expect(response[4], "FB")
-        self.expect(int(response[5]), portnr)
+        expect(response[2], "INFO")
+        expect(int(response[3]), bus)
+        expect(response[4], "FB")
+        expect(int(response[5]), portnr)
         return int(response[6])
 
     def wait_FB(self, portnr: int, state: int, timeout: int, socket_index: int = 0, bus: int = 1) -> str:
@@ -181,7 +176,6 @@ class SrcpConnection:
             self._InfoportS.close()
             self._InfoportS = None
             raise
-
 
     def getInfoPortSocket(self):
         return self._InfoportS
