@@ -1,5 +1,4 @@
 import socket
-import string
 
 from .base import expect, log
 from .exceptions import SrcpError, ProtocolError
@@ -130,143 +129,143 @@ class SrcpConnection:
         log.debug('storing loco [%s] with ident %s' % (loco, locoident))
         self._locos[locoident] = loco
 
-    def add_accessory(self, accessory, address=None):
-        """addAccessory(self, a)
+    # def add_accessory(self, accessory, address=None):
+    #     """addAccessory(self, a)
+    #
+    #     Define a new accessory a of type class Accessory.  The
+    #     decodertype and address are used to distinguish all the
+    #     accessories.  Information sent through the info port is
+    #     dispatched to the accessory to update its state to match the
+    #     actual state.
+    #
+    #     """
+    #     if address is None:
+    #         address = accessory.getAddress()
+    #
+    #     accident = '%d/%d' % (address, accessory.getBus())
+    #     log.debug('storing accessory [%s] with ident %s' % (accessory, accident))
+    #     self._accessories[accident] = accessory
 
-        Define a new accessory a of type class Accessory.  The
-        decodertype and address are used to distinguish all the
-        accessories.  Information sent through the info port is
-        dispatched to the accessory to update its state to match the
-        actual state.
+    # def open_info_port(self):
+    #     """OpenInfoPort(self)
+    #
+    #     Open the info port of the SRCP server.
+    #     This function is normally used in conjunction with
+    #     ReadDispatchInfo().
+    #     The method Monitor() is used to asynchronously
+    #     process incoming info messages.
+    #
+    #     """
+    #     log.debug('OpenInfoPort: %s %s' % (self.host, self.port))
+    #     if not self.connected:
+    #         raise SrcpError('not connected')
+    #     if self._InfoportS:
+    #         raise SrcpError('infoport already open')
+    #     self._InfoportS = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     try:
+    #         self._InfoportS.connect((self.host, self.port))
+    #         self._InfoportF = self._InfoportS.makefile('r')
+    #         answ = self._InfoportF.readline()
+    #         self._InfoportS.send(b'SET CONNECTIONMODE SRCP INFO\n')
+    #         self._InfoportF.readline()
+    #         self._InfoportS.send(b'GO\n')
+    #         self._InfoportF.readline()
+    #         return answ
+    #     except socket.error:
+    #         self._InfoportS.close()
+    #         self._InfoportS = None
+    #         raise
+    #
+    # def getInfoPortSocket(self):
+    #     return self._InfoportS
+    #
+    # def addFBProc(self, portno, proc, bus=1):
+    #     if bus not in self._fb_procs:
+    #         self._fb_procs[bus] = {}
+    #     if portno in self._fb_procs[bus]:
+    #         self._fb_procs[bus][portno].append(proc)
+    #     else:
+    #         self._fb_procs[bus][portno] = [proc]
+    #
+    # def clearFBProc(self, portno, bus=1):
+    #     if bus in self._fb_procs:
+    #         if portno in self._fb_procs[bus]:
+    #             del self._fb_procs[bus][portno]
+    #
+    # def addGAProc(self, proc):
+    #     self._ga_procs.append(proc)
+    #
+    # def setTimerProc(self, timeout, proc):
+    #     self._timeoutproc = [timeout, proc]
+    #
+    # def addInputProc(self, file, proc):
+    #     self._inputProc = (file, proc)
 
-        """
-        if address is None:
-            address = accessory.getAddress()
-
-        accident = '%d/%d' % (address, accessory.getBus())
-        log.debug('storing accessory [%s] with ident %s' % (accessory, accident))
-        self._accessories[accident] = accessory
-
-    def open_info_port(self):
-        """OpenInfoPort(self)
-
-        Open the info port of the SRCP server.
-        This function is normally used in conjunction with
-        ReadDispatchInfo().
-        The method Monitor() is used to asynchronously
-        process incoming info messages.
-
-        """
-        log.debug('OpenInfoPort: %s %s' % (self.host, self.port))
-        if not self.connected:
-            raise SrcpError('not connected')
-        if self._InfoportS:
-            raise SrcpError('infoport already open')
-        self._InfoportS = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self._InfoportS.connect((self.host, self.port))
-            self._InfoportF = self._InfoportS.makefile('r')
-            answ = self._InfoportF.readline()
-            self._InfoportS.send(b'SET CONNECTIONMODE SRCP INFO\n')
-            self._InfoportF.readline()
-            self._InfoportS.send(b'GO\n')
-            self._InfoportF.readline()
-            return answ
-        except socket.error:
-            self._InfoportS.close()
-            self._InfoportS = None
-            raise
-
-    def getInfoPortSocket(self):
-        return self._InfoportS
-
-    def addFBProc(self, portno, proc, bus=1):
-        if bus not in self._fb_procs:
-            self._fb_procs[bus] = {}
-        if portno in self._fb_procs[bus]:
-            self._fb_procs[bus][portno].append(proc)
-        else:
-            self._fb_procs[bus][portno] = [proc]
-
-    def clearFBProc(self, portno, bus=1):
-        if bus in self._fb_procs:
-            if portno in self._fb_procs[bus]:
-                del self._fb_procs[bus][portno]
-
-    def addGAProc(self, proc):
-        self._ga_procs.append(proc)
-
-    def setTimerProc(self, timeout, proc):
-        self._timeoutproc = [timeout, proc]
-
-    def addInputProc(self, file, proc):
-        self._inputProc = (file, proc)
-
-    def readDispatchInfo(self):
-        """ReadDispatchInfo(self)
-        Read and dispatch all the data currently available on the info port.
-        """
-
-        # read some lines
-        datalines = string.split(self._InfoportS.recv(65536), '\n')
-        for data in datalines:
-            log.debug('Monitor info: %s' % data)
-            # print('Monitor info: %s' % data)
-            if not data: continue
-            w = string.split(data)
-            if w[2] != 'INFO': continue
-
-            if w[4] == 'GL':
-                locoident = w[5] + '/' + w[3]
-                if locoident in self._locos:
-                    self._locos[locoident].parseinfo(data)
-            elif w[4] == 'GA':
-                accident = w[5] + '/' + w[3]
-                if accident in self._accessories:
-                    self._accessories[accident].parseinfo(data)
-                if w[1] == '100':
-                    for proc in self._ga_procs:
-                        #    acc_nr     bus, acc_port   state
-                        proc(int(w[5]), int(w[3]), int(w[6]), int(w[7]))
-            elif w[4] == 'FB':
-                portno = int(w[5])
-                bus = int(w[3])
-                if bus in self._fb_procs:
-                    if portno in self._fb_procs[bus]:
-                        proclist = self._fb_procs[bus][portno]
-                        for proc in proclist:
-                            proc(portno, bus, int(w[6]))
-
-    def mainloop(self):
-        log.debug('InMonitor!')
-        selectports = []
-        self.open_info_port()
-        selectports.append(self._InfoportS)
-
-        if self._inputProc[0] != None:
-            selectports.append(self._inputProc[0])
-
-        log.debug('Monitor: ports: ' + repr(selectports))
-        t = self._timeoutproc[0]
-        while (1):
-            readable, w, x, t = xselect(selectports, [], [], t)
-            if self._InfoportS in readable:
-                self.readDispatchInfo()
-                continue
-            if self._inputProc[0] in readable:
-                self._inputProc[1]()
-                continue
-            assert t <= 0, "implementation error"
-            if self._timeoutproc[1] != None:
-                # noch ungetestet, deshalb auskommentiert
-                # self.__timeoutproc[1]()
-                t = self._timeoutproc[0]
-
-    def monitor(self):
-        import threading
-        t = threading.Thread(target=self.mainloop)
-        t.setDaemon(1)
-        t.start()
+    # def readDispatchInfo(self):
+    #     """ReadDispatchInfo(self)
+    #     Read and dispatch all the data currently available on the info port.
+    #     """
+    #
+    #     # read some lines
+    #     datalines = string.split(self._InfoportS.recv(65536), '\n')
+    #     for data in datalines:
+    #         log.debug('Monitor info: %s' % data)
+    #         # print('Monitor info: %s' % data)
+    #         if not data: continue
+    #         w = string.split(data)
+    #         if w[2] != 'INFO': continue
+    #
+    #         if w[4] == 'GL':
+    #             locoident = w[5] + '/' + w[3]
+    #             if locoident in self._locos:
+    #                 self._locos[locoident].parseinfo(data)
+    #         elif w[4] == 'GA':
+    #             accident = w[5] + '/' + w[3]
+    #             if accident in self._accessories:
+    #                 self._accessories[accident].parseinfo(data)
+    #             if w[1] == '100':
+    #                 for proc in self._ga_procs:
+    #                     #    acc_nr     bus, acc_port   state
+    #                     proc(int(w[5]), int(w[3]), int(w[6]), int(w[7]))
+    #         elif w[4] == 'FB':
+    #             portno = int(w[5])
+    #             bus = int(w[3])
+    #             if bus in self._fb_procs:
+    #                 if portno in self._fb_procs[bus]:
+    #                     proclist = self._fb_procs[bus][portno]
+    #                     for proc in proclist:
+    #                         proc(portno, bus, int(w[6]))
+    #
+    # def mainloop(self):
+    #     log.debug('InMonitor!')
+    #     selectports = []
+    #     self.open_info_port()
+    #     selectports.append(self._InfoportS)
+    #
+    #     if self._inputProc[0] != None:
+    #         selectports.append(self._inputProc[0])
+    #
+    #     log.debug('Monitor: ports: ' + repr(selectports))
+    #     t = self._timeoutproc[0]
+    #     while (1):
+    #         readable, w, x, t = xselect(selectports, [], [], t)
+    #         if self._InfoportS in readable:
+    #             self.readDispatchInfo()
+    #             continue
+    #         if self._inputProc[0] in readable:
+    #             self._inputProc[1]()
+    #             continue
+    #         assert t <= 0, "implementation error"
+    #         if self._timeoutproc[1] != None:
+    #             # noch ungetestet, deshalb auskommentiert
+    #             # self.__timeoutproc[1]()
+    #             t = self._timeoutproc[0]
+    #
+    # def monitor(self):
+    #     import threading
+    #     t = threading.Thread(target=self.mainloop)
+    #     t.setDaemon(1)
+    #     t.start()
 
     # Funktioniert nicht mit srcpd V.2.0.10: RESET 0 SERVER
     #  def reset(self):
